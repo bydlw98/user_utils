@@ -1,9 +1,10 @@
 [package]
 name = "user_utils"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 categories = ["os"]
 description = "Utility library for accessing system users and groups"
+exclude = ["/.github/"]
 homepage = "https://github.com/bydlw98/user_utils"
 keywords = ["bindings", "users", "groups"]
 license = "MIT OR Apache-2.0"
