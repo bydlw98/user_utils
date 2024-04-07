@@ -3,7 +3,7 @@
 #[cfg(test)]
 mod tests;
 
-use super::LookupResult;
+use super::Error;
 
 use std::ffi::{c_char, CStr, OsStr, OsString};
 use std::fmt;
@@ -45,7 +45,7 @@ impl BorrowedUid<'_> {
     /// # libc functions used
     ///
     /// - [`getpwuid_r`](https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwuid_r.html)
-    pub fn lookup_passwd(&self) -> LookupResult<Passwd> {
+    pub fn lookup_passwd(&self) -> Result<Passwd, Error> {
         Passwd::lookup_by_uid(self.raw_uid)
     }
 
@@ -54,17 +54,12 @@ impl BorrowedUid<'_> {
     /// # libc functions used
     ///
     /// - [`getpwuid_r`](https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwuid_r.html)
-    pub fn lookup_username(&self) -> LookupResult<OsString> {
-        match self.lookup_passwd() {
-            LookupResult::Ok(pwd) => {
-                let pw_name = unsafe { CStr::from_ptr(pwd.raw_pwd.pw_name) };
-                let vec = pw_name.to_bytes().to_vec();
+    pub fn lookup_username(&self) -> Result<OsString, Error> {
+        let pwd = self.lookup_passwd()?;
+        let pw_name = unsafe { CStr::from_ptr(pwd.raw_pwd.pw_name) };
+        let vec = pw_name.to_bytes().to_vec();
 
-                LookupResult::Ok(OsString::from_vec(vec))
-            }
-            LookupResult::NoRecord => LookupResult::NoRecord,
-            LookupResult::Err(err) => LookupResult::Err(err),
-        }
+        Ok(OsString::from_vec(vec))
     }
 }
 
@@ -157,7 +152,7 @@ impl Passwd {
         &self.raw_pwd
     }
 
-    pub(crate) fn lookup_by_uid(uid: libc::uid_t) -> LookupResult<Self> {
+    pub(crate) fn lookup_by_uid(uid: libc::uid_t) -> Result<Self, Error> {
         let mut buflen = unsafe { libc::sysconf(libc::_SC_GETPW_R_SIZE_MAX) };
         if buflen == -1 {
             buflen = 1024;
@@ -181,12 +176,12 @@ impl Passwd {
             if return_code == 0 {
                 // If passwd record is found for uid, result is a pointer to pwd
                 if result == &mut passwd.raw_pwd {
-                    LookupResult::Ok(passwd)
+                    Ok(passwd)
                 } else {
-                    LookupResult::NoRecord
+                    Err(Error::NoRecord)
                 }
             } else {
-                LookupResult::Err(io::Error::last_os_error())
+                Err(Error::last_os_error())
             }
         }
     }
@@ -236,7 +231,7 @@ impl BorrowedGid<'_> {
     /// # libc functions used
     ///
     /// - [`getgrgid_r`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/getgrgid_r.html)
-    pub fn lookup_group(&self) -> LookupResult<Group> {
+    pub fn lookup_group(&self) -> Result<Group, Error> {
         Group::lookup_by_gid(self.raw_gid)
     }
 
@@ -245,17 +240,12 @@ impl BorrowedGid<'_> {
     /// # libc functions used
     ///
     /// - [`getgrgid_r`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/getgrgid_r.html)
-    pub fn lookup_groupname(&self) -> LookupResult<OsString> {
-        match self.lookup_group() {
-            LookupResult::Ok(grp) => {
-                let gr_name = unsafe { CStr::from_ptr(grp.raw_group.gr_name) };
-                let vec = gr_name.to_bytes().to_vec();
+    pub fn lookup_groupname(&self) -> Result<OsString, Error> {
+        let grp = self.lookup_group()?;
+        let gr_name = unsafe { CStr::from_ptr(grp.raw_group.gr_name) };
+        let vec = gr_name.to_bytes().to_vec();
 
-                LookupResult::Ok(OsString::from_vec(vec))
-            }
-            LookupResult::NoRecord => LookupResult::NoRecord,
-            LookupResult::Err(err) => LookupResult::Err(err),
-        }
+        Ok(OsString::from_vec(vec))
     }
 }
 
@@ -361,7 +351,7 @@ impl Group {
         &self.raw_group
     }
 
-    pub(crate) fn lookup_by_gid(gid: libc::gid_t) -> LookupResult<Self> {
+    pub(crate) fn lookup_by_gid(gid: libc::gid_t) -> Result<Self, Error> {
         let mut buflen = unsafe { libc::sysconf(libc::_SC_GETPW_R_SIZE_MAX) };
         if buflen == -1 {
             buflen = 1024;
@@ -386,12 +376,12 @@ impl Group {
             if return_code == 0 {
                 // If passwd record is found for uid, result is a pointer to pwd
                 if result == &mut grp.raw_group {
-                    LookupResult::Ok(grp)
+                    Ok(grp)
                 } else {
-                    LookupResult::NoRecord
+                    Err(Error::NoRecord)
                 }
             } else {
-                LookupResult::Err(io::Error::last_os_error())
+                Err(Error::last_os_error())
             }
         }
     }

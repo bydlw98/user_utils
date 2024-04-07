@@ -2,7 +2,7 @@
 
 mod sys;
 
-use super::*;
+use super::Error;
 
 use std::ffi::OsString;
 use std::fmt;
@@ -77,7 +77,7 @@ impl BorrowedPsid<'_> {
     /// # windows_sys functions used
     ///
     /// - [`LookupAccountSidW`](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-lookupaccountsidw)
-    pub fn lookup_accountname(&self) -> LookupResult<OsString> {
+    pub fn lookup_accountname(&self) -> Result<OsString, Error> {
         let mut wide_name_length: u32 = 32;
         let mut wide_domain_length: u32 = 32;
         let mut wide_name_buf: [u16; 32] = [0; 32];
@@ -98,7 +98,7 @@ impl BorrowedPsid<'_> {
 
         // If LookupAccountSidW succeeds, return_code is non-zero
         if return_code != 0 {
-            LookupResult::Ok(Self::accountname_from_wide_domain_and_name(
+            Ok(Self::accountname_from_wide_domain_and_name(
                 &wide_domain_buf,
                 &wide_name_buf,
             ))
@@ -106,7 +106,7 @@ impl BorrowedPsid<'_> {
         // If GetLastError() returns ERROR_NONE_MAPPED, means
         // unable to get the name of SID
         else if unsafe { c::GetLastError() } == c::ERROR_NONE_MAPPED {
-            LookupResult::NoRecord
+            Err(Error::NoRecord)
         } else {
             // Retry lookup SID name with correct size
             let mut wide_name = vec![0; wide_name_length as usize];
@@ -126,12 +126,12 @@ impl BorrowedPsid<'_> {
 
             // If LookupAccountSidW succeeds, return_code is non-zero
             if return_code != 0 {
-                LookupResult::Ok(Self::accountname_from_wide_domain_and_name(
+                Ok(Self::accountname_from_wide_domain_and_name(
                     &wide_domain_buf,
                     &wide_name_buf,
                 ))
             } else {
-                LookupResult::Err(io::Error::last_os_error())
+                Err(Error::NoRecord)
             }
         }
     }

@@ -6,27 +6,40 @@ pub mod unix;
 #[cfg(windows)]
 pub mod windows;
 
+use std::fmt;
 use std::io;
 
-/// `LookupResult` is a type that represents the lookup result of a record
+/// An error when searching through user or group database
 #[derive(Debug)]
-pub enum LookupResult<T> {
-    /// Contains successful record
-    Ok(T),
-
-    /// No record
+pub enum Error {
+    /// No record found
     NoRecord,
 
-    /// Contains the error value
-    Err(io::Error),
+    /// An error that occured when doing I/O
+    Io(io::Error),
 }
 
-impl<T> LookupResult<T> {
-    /// Returns the contained `Ok` value or a provided default
-    pub fn unwrap_or(self, default: T) -> T {
-        match self {
-            LookupResult::Ok(t) => t,
-            _ => default,
+impl Error {
+    /// Shorthand for `Error::Io(io::Error::last_os_error())`
+    #[cfg(unix)]
+    fn last_os_error() -> Self {
+        Self::Io(io::Error::last_os_error())
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Self::NoRecord => write!(f, "No record is found"),
+            Self::Io(ref err) => fmt::Display::fmt(err, f),
         }
+    }
+}
+
+impl std::error::Error for Error {}
+
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        Error::Io(err)
     }
 }
