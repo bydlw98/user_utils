@@ -1,7 +1,7 @@
 //! Unix-specific wrappers around user and group primitives
 
-mod user;
 mod group;
+mod user;
 
-pub use user::*;
 pub use group::*;
+pub use user::*;
