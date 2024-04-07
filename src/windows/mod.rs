@@ -15,6 +15,18 @@ use std::slice;
 
 use sys::*;
 
+/// A trait to borrow the psid.
+pub trait AsPsid {
+    /// Borrows the psid.
+    fn as_psid(&self) -> BorrowedPsid<'_>;
+}
+
+/// A trait to extract the raw psid.
+pub trait AsRawPsid {
+    /// Extracts the raw psid.
+    fn as_raw_psid(&self) -> c::PSID;
+}
+
 /// A borrowed psid.
 ///
 /// This has a lifetime parameter to tie it to the lifetime of something that owns the psid.
@@ -205,16 +217,26 @@ impl PartialEq<OwnedPsid> for BorrowedPsid<'_> {
     }
 }
 
+impl AsPsid for BorrowedPsid<'_> {
+    #[inline]
+    fn as_psid(&self) -> BorrowedPsid<'_> {
+        *self
+    }
+}
+
+impl AsRawPsid for BorrowedPsid<'_> {
+    #[inline]
+    fn as_raw_psid(&self) -> c::PSID {
+        self.raw_psid
+    }
+}
+
 /// An owned Psid
 pub struct OwnedPsid {
     buf: Vec<u8>,
 }
 
 impl OwnedPsid {
-    fn as_raw_psid(&self) -> c::PSID {
-        self.buf.as_ptr() as c::PSID
-    }
-
     /// Creates a new `OwnedPsid` instance containing the well-known World SID
     ///
     /// # windows_sys functions used
@@ -245,7 +267,7 @@ impl OwnedPsid {
 
 impl fmt::Display for OwnedPsid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let borrowed_psid = unsafe { BorrowedPsid::borrow_raw_unchecked(self.as_raw_psid()) };
+        let borrowed_psid = self.as_psid();
 
         match borrowed_psid.convert_to_string_sid() {
             Ok(string_sid) => write!(f, "{}", string_sid),
@@ -256,7 +278,7 @@ impl fmt::Display for OwnedPsid {
 
 impl fmt::Debug for OwnedPsid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let borrowed_psid = unsafe { BorrowedPsid::borrow_raw_unchecked(self.as_raw_psid()) };
+        let borrowed_psid = self.as_psid();
 
         match borrowed_psid.convert_to_string_sid() {
             Ok(string_sid) => write!(f, "{}", string_sid),
@@ -276,6 +298,20 @@ impl Eq for OwnedPsid {}
 impl PartialEq<BorrowedPsid<'_>> for OwnedPsid {
     fn eq(&self, other: &BorrowedPsid<'_>) -> bool {
         other.eq(self)
+    }
+}
+
+impl AsPsid for OwnedPsid {
+    #[inline]
+    fn as_psid(&self) -> BorrowedPsid<'_> {
+        unsafe { BorrowedPsid::borrow_raw_unchecked(self.as_raw_psid()) }
+    }
+}
+
+impl AsRawPsid for OwnedPsid {
+    #[inline]
+    fn as_raw_psid(&self) -> c::PSID {
+        self.buf.as_ptr() as c::PSID
     }
 }
 
