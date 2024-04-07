@@ -6,7 +6,7 @@ use std::process::Command;
 #[test]
 fn test_passwd_lookup_by_uid_ok() {
     if let Ok(pwd) = Passwd::lookup_by_uid(unsafe { libc::getuid() }) {
-        assert_eq!(pwd.name(), env::var_os("LOGNAME").unwrap());
+        assert_eq!(pwd.name(), env::var_os("USER").unwrap());
 
         assert_eq!(
             pwd.uid(),
