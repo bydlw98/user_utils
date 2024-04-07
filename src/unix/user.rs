@@ -9,6 +9,18 @@ use std::ptr;
 use super::BorrowedGid;
 use crate::Error;
 
+/// A trait to borrow the uid
+pub trait AsUid {
+    /// Borrows the uid.
+    fn as_uid(&self) -> BorrowedUid<'_>;
+}
+
+/// A trait to extract the raw uid.
+pub trait AsRawUid {
+    /// Extracts the raw uid.
+    fn as_raw_uid(&self) -> libc::uid_t;
+}
+
 /// A borrowed uid.
 ///
 /// This has a lifetime parameter to tie it to the lifetime of something that owns the uid.
@@ -87,16 +99,56 @@ impl PartialEq<OwnedUid> for BorrowedUid<'_> {
 
 impl Eq for BorrowedUid<'_> {}
 
+impl AsUid for BorrowedUid<'_> {
+    #[inline]
+    fn as_uid(&self) -> BorrowedUid<'_> {
+        *self
+    }
+}
+
+impl AsRawUid for BorrowedUid<'_> {
+    #[inline]
+    fn as_raw_uid(&self) -> libc::uid_t {
+        self.raw_uid
+    }
+}
+
 /// An owned uid
 #[derive(PartialEq, Eq)]
 pub struct OwnedUid {
     raw_uid: libc::uid_t,
 }
 
+impl fmt::Display for OwnedUid {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.raw_uid)
+    }
+}
+
+impl fmt::Debug for OwnedUid {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.raw_uid)
+    }
+}
+
 impl PartialEq<BorrowedUid<'_>> for OwnedUid {
     #[inline]
     fn eq(&self, other: &BorrowedUid<'_>) -> bool {
         self.raw_uid.eq(&other.raw_uid)
+    }
+}
+
+impl AsUid for OwnedUid {
+    #[inline]
+    fn as_uid(&self) -> BorrowedUid<'_> {
+        BorrowedUid::borrow_raw(self.raw_uid)
+    }
+}
+
+impl AsRawUid for OwnedUid {
+    #[inline]
+    fn as_raw_uid(&self) -> libc::uid_t {
+        self.raw_uid
     }
 }
 

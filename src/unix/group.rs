@@ -8,6 +8,18 @@ use std::ptr;
 
 use crate::Error;
 
+/// A trait to borrow the gid
+pub trait AsGid {
+    /// Borrows the gid.
+    fn as_gid(&self) -> BorrowedGid<'_>;
+}
+
+/// A trait to extract the raw gid.
+pub trait AsRawGid {
+    /// Extracts the raw gid.
+    fn as_raw_gid(&self) -> libc::gid_t;
+}
+
 /// A borrowed gid.
 ///
 /// This has a lifetime parameter to tie it to the lifetime of something that owns the gid.
@@ -86,6 +98,20 @@ impl PartialEq<OwnedGid> for BorrowedGid<'_> {
     }
 }
 
+impl AsGid for BorrowedGid<'_> {
+    #[inline]
+    fn as_gid(&self) -> BorrowedGid<'_> {
+        *self
+    }
+}
+
+impl AsRawGid for BorrowedGid<'_> {
+    #[inline]
+    fn as_raw_gid(&self) -> libc::gid_t {
+        self.raw_gid
+    }
+}
+
 /// An owned gid
 #[derive(PartialEq, Eq)]
 pub struct OwnedGid {
@@ -108,6 +134,20 @@ impl PartialEq<BorrowedGid<'_>> for OwnedGid {
     #[inline]
     fn eq(&self, other: &BorrowedGid<'_>) -> bool {
         self.raw_gid.eq(&other.raw_gid)
+    }
+}
+
+impl AsGid for OwnedGid {
+    #[inline]
+    fn as_gid(&self) -> BorrowedGid<'_> {
+        BorrowedGid::borrow_raw(self.raw_gid)
+    }
+}
+
+impl AsRawGid for OwnedGid {
+    #[inline]
+    fn as_raw_gid(&self) -> libc::gid_t {
+        self.raw_gid
     }
 }
 
