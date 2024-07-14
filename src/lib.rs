@@ -1,5 +1,11 @@
 #![doc = include_str!("../README.md")]
 
+pub mod os;
+
+mod user;
+
+pub use user::*;
+
 #[cfg(unix)]
 pub mod unix;
 
