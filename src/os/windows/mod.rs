@@ -11,10 +11,11 @@ use std::ops;
 use std::ptr;
 use std::slice;
 
+use crate::private;
 use crate::Error;
 
 /// Windows-specific extensions to [`Userid`](crate::Userid).
-pub trait UseridExt {
+pub trait UseridExt: private::Sealed {
     /// Extracts the raw psid.
     fn as_raw_psid(&self) -> sys::PSID;
 
@@ -29,7 +30,7 @@ pub trait UseridExt {
     unsafe fn from_raw_psid_unchecked<'psid>(psid: sys::PSID) -> &'psid Self;
 }
 
-pub trait GroupidExt {
+pub trait GroupidExt: private::Sealed {
     /// Extracts the raw psid.
     fn as_raw_psid(&self) -> sys::PSID;
 
@@ -190,6 +191,7 @@ impl PartialEq<UseridBuf> for Userid {
 
 impl Eq for Userid {}
 
+impl private::Sealed for Userid {}
 impl UseridExt for Userid {
     fn as_raw_psid(&self) -> sys::PSID {
         self.raw_psid
@@ -276,6 +278,7 @@ impl fmt::Display for Groupid {
     }
 }
 
+impl private::Sealed for Groupid {}
 impl GroupidExt for Groupid {
     fn as_raw_psid(&self) -> sys::PSID {
         self.0.as_raw_psid()

@@ -7,6 +7,7 @@ use std::ops;
 use crate::os::unix as os_impl;
 #[cfg(windows)]
 use crate::os::windows as os_impl;
+use crate::private;
 use crate::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -36,6 +37,8 @@ impl PartialEq<GroupidBuf> for Groupid {
         self.0.eq(&other.0)
     }
 }
+
+impl private::Sealed for Groupid {}
 
 #[cfg(unix)]
 impl crate::os::unix::GroupidExt for Groupid {

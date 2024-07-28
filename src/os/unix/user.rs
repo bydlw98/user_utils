@@ -7,10 +7,11 @@ use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::ptr;
 
 use crate::os::unix::GroupidExt;
+use crate::private;
 use crate::Error;
 
 /// Unix-specific extensions to [`Userid`](crate::Userid).
-pub trait UseridExt {
+pub trait UseridExt: private::Sealed {
     /// Extracts the raw uid.
     fn as_raw_uid(&self) -> libc::uid_t;
 
@@ -68,6 +69,7 @@ impl PartialEq<UseridBuf> for Userid {
     }
 }
 
+impl private::Sealed for Userid {}
 impl UseridExt for Userid {
     fn as_raw_uid(&self) -> libc::uid_t {
         self.raw_uid

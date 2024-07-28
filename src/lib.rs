@@ -17,6 +17,10 @@ pub mod windows;
 use std::fmt;
 use std::io;
 
+mod private {
+    pub trait Sealed {}
+}
+
 /// An error when searching through user or group database
 #[derive(Debug)]
 pub enum Error {

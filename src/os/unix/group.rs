@@ -6,10 +6,11 @@ use std::ops;
 use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::ptr;
 
+use crate::private;
 use crate::Error;
 
 /// Unix-specific extensions to [`Groupid`](crate::Groupid).
-pub trait GroupidExt {
+pub trait GroupidExt: private::Sealed {
     /// Extracts the raw gid.
     fn as_raw_gid(&self) -> libc::gid_t;
 
@@ -63,6 +64,7 @@ impl fmt::Debug for Groupid {
     }
 }
 
+impl private::Sealed for Groupid {}
 impl GroupidExt for Groupid {
     fn as_raw_gid(&self) -> libc::gid_t {
         self.raw_gid
