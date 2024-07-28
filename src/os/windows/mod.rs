@@ -1,9 +1,9 @@
 //! Windows-specific wrappers around user and group primitives.
 
 pub(crate) mod sys;
-mod utils;
 #[cfg(test)]
 mod tests;
+mod utils;
 
 use std::ffi::OsString;
 use std::fmt;
@@ -325,6 +325,12 @@ impl GroupidExt for Groupid {
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct GroupidBuf(UseridBuf);
 
+impl fmt::Display for GroupidBuf {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl ops::Deref for GroupidBuf {
     type Target = Groupid;
 
@@ -348,7 +354,7 @@ impl GroupidBufExt for GroupidBuf {
             )
         };
 
-        // On success, return_code is 0
+        // On success, return_code is non-zero
         if return_code != 0 {
             Ok(Self(UseridBuf { buf }))
         } else {

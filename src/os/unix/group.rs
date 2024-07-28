@@ -86,6 +86,12 @@ pub(crate) struct GroupidBuf {
     raw_gid: libc::gid_t,
 }
 
+impl fmt::Display for GroupidBuf {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.raw_gid)
+    }
+}
+
 impl ops::Deref for GroupidBuf {
     type Target = Groupid;
 

@@ -89,6 +89,12 @@ impl crate::os::windows::GroupidExt for Groupid {
 #[derive(Debug, PartialEq, Eq)]
 pub struct GroupidBuf(os_impl::GroupidBuf);
 
+impl fmt::Display for GroupidBuf {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl ops::Deref for GroupidBuf {
     type Target = Groupid;
 
