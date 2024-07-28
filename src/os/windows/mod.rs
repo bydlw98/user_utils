@@ -29,6 +29,21 @@ pub trait UseridExt {
     unsafe fn from_raw_psid_unchecked<'psid>(psid: sys::PSID) -> &'psid Self;
 }
 
+pub trait GroupidExt {
+    /// Extracts the raw psid.
+    fn as_raw_psid(&self) -> sys::PSID;
+
+    /// Returns a `Groupid` holding the given raw psid.
+    fn from_raw_psid<'psid>(psid: sys::PSID) -> Option<&'psid Self>;
+
+    /// Returns a `Userid` holding the given unvalidated raw psid
+    ///
+    /// # Safety
+    ///
+    /// This method does not check if psid is valid.
+    unsafe fn from_raw_psid_unchecked<'psid>(psid: sys::PSID) -> &'psid Self;
+}
+
 #[derive(Clone, Copy)]
 pub(crate) struct Userid {
     raw_psid: sys::PSID,
@@ -239,3 +254,55 @@ impl PartialEq<Userid> for UseridBuf {
 }
 
 impl Eq for UseridBuf {}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Groupid(Userid);
+
+impl Groupid {
+    pub fn try_clone_to_owned(&self) -> Result<GroupidBuf, io::Error> {
+        let useridbuf = self.0.try_clone_to_owned()?;
+
+        Ok(GroupidBuf(useridbuf))
+    }
+
+    pub fn groupname(&self) -> Result<OsString, Error> {
+        self.0.username()
+    }
+}
+
+impl fmt::Display for Groupid {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl GroupidExt for Groupid {
+    fn as_raw_psid(&self) -> sys::PSID {
+        self.0.as_raw_psid()
+    }
+
+    fn from_raw_psid<'psid>(psid: sys::PSID) -> Option<&'psid Self> {
+        if psid.is_null() || (unsafe { sys::IsValidSid(psid) } == 0) {
+            None
+        } else {
+            Some(unsafe { Self::from_raw_psid_unchecked(psid) })
+        }
+    }
+
+    unsafe fn from_raw_psid_unchecked<'psid>(psid: sys::PSID) -> &'psid Self {
+        // SAFETY: Groupid is just a wrapper around sys::PSID.
+        // therefore converting sys::PSID to &Userid is safe.
+        unsafe { &*(psid as *const Self) }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct GroupidBuf(UseridBuf);
+
+impl ops::Deref for GroupidBuf {
+    type Target = Groupid;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { Groupid::from_raw_psid_unchecked(self.0.as_raw_psid()) }
+    }
+}

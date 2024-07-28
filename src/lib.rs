@@ -2,8 +2,10 @@
 
 pub mod os;
 
+mod group;
 mod user;
 
+pub use group::*;
 pub use user::*;
 
 #[cfg(unix)]

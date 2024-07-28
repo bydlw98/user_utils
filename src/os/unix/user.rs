@@ -6,6 +6,7 @@ use std::ops;
 use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::ptr;
 
+use crate::os::unix::GroupidExt;
 use crate::Error;
 
 /// Unix-specific extensions to [`Userid`](crate::Userid).
@@ -118,17 +119,17 @@ impl Passwd {
         OsStr::from_bytes(pw_name.to_bytes())
     }
 
-    // /// Returns the id of user
+    /// Returns the id of user
     #[inline]
     pub fn uid(&self) -> &crate::Userid {
         crate::Userid::from_raw_uid(&self.raw_pwd.pw_uid)
     }
 
     /// Returns the primary group id of user
-    // #[inline]
-    // pub fn gid(&self) -> BorrowedGid<'_> {
-    //     BorrowedGid::borrow_raw(self.raw_pwd.pw_gid)
-    // }
+    #[inline]
+    pub fn gid(&self) -> &crate::Groupid {
+        crate::Groupid::from_raw_gid(&self.raw_pwd.pw_gid)
+    }
 
     /// Returns the initial working directory of user
     pub fn dir(&self) -> &OsStr {
@@ -240,10 +241,7 @@ mod tests {
 
             assert_eq!(pwd.uid().as_raw_uid(), unsafe { libc::getuid() });
 
-            // assert_eq!(
-            //     pwd.gid(),
-            //     BorrowedGid::borrow_raw(unsafe { libc::getgid() })
-            // );
+            assert_eq!(pwd.gid().as_raw_gid(), unsafe { libc::getgid() });
 
             // Using $HOME to get home dir and $SHELL to get login shell does not work
             // in github actions. This causes the 2 asserts below to fail
