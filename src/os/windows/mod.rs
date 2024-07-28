@@ -2,6 +2,8 @@
 
 pub(crate) mod sys;
 mod utils;
+#[cfg(test)]
+mod tests;
 
 use std::ffi::OsString;
 use std::fmt;
@@ -61,18 +63,6 @@ pub trait GroupidBufExt: private::Sealed {
     ///
     /// - [`GetSidLengthRequired`](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-getsidlengthrequired)
     /// - [`CreateWellKnownSid`](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-createwellknownsid)
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use user_utils::os::windows::GroupidBufExt;
-    ///
-    /// let world_groupid = user_utils::GroupidBuf::world().unwrap();
-    /// let world_groupid_str = world_groupid.to_string();
-    /// println!("{:?}", world_groupid_str);
-    ///
-    /// assert_eq!(world_groupid_str, "S-1-1-0");
-    /// ```
     fn world() -> Result<Self, io::Error>
     where
         Self: Sized;
