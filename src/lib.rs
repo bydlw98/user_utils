@@ -8,12 +8,6 @@ mod user;
 pub use group::*;
 pub use user::*;
 
-#[cfg(unix)]
-pub mod unix;
-
-#[cfg(windows)]
-pub mod windows;
-
 use std::fmt;
 use std::io;
 
