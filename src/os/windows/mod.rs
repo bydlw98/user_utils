@@ -20,6 +20,10 @@ pub trait UseridExt: private::Sealed {
     fn as_raw_psid(&self) -> sys::PSID;
 
     /// Returns a `Userid` holding the given raw psid.
+    ///
+    /// # windows_sys functions used
+    ///
+    /// - [`IsValidSid`](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-isvalidsid)
     fn from_raw_psid<'psid>(psid: sys::PSID) -> Option<&'psid Self>;
 
     /// Returns a `Userid` holding the given unvalidated raw psid
@@ -30,11 +34,16 @@ pub trait UseridExt: private::Sealed {
     unsafe fn from_raw_psid_unchecked<'psid>(psid: sys::PSID) -> &'psid Self;
 }
 
+/// Windows-specific extensions to [`Groupid`](crate::Groupid).
 pub trait GroupidExt: private::Sealed {
     /// Extracts the raw psid.
     fn as_raw_psid(&self) -> sys::PSID;
 
     /// Returns a `Groupid` holding the given raw psid.
+    ///
+    /// # windows_sys functions used
+    ///
+    /// - [`IsValidSid`](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-isvalidsid)
     fn from_raw_psid<'psid>(psid: sys::PSID) -> Option<&'psid Self>;
 
     /// Returns a `Userid` holding the given unvalidated raw psid
@@ -43,6 +52,27 @@ pub trait GroupidExt: private::Sealed {
     ///
     /// This method does not check if psid is valid.
     unsafe fn from_raw_psid_unchecked<'psid>(psid: sys::PSID) -> &'psid Self;
+}
+
+pub trait GroupidBufExt: private::Sealed {
+    /// Creates a new `GroupidBuf` instance containing the well-known World SID.
+    ///
+    /// # windows_sys functions used
+    ///
+    /// - [`GetSidLengthRequired`](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-getsidlengthrequired)
+    /// - [`CreateWellKnownSid`](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-createwellknownsid)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let world_groupid = GroupidBuf::world().unwrap();
+    /// let world_groupid_str = world_groupid.to_string();
+    ///
+    /// assert_eq!(world_groupid_str, "S-1-1-0")
+    /// ```
+    fn world() -> Result<Self, io::Error>
+    where
+        Self: Sized;
 }
 
 #[derive(Clone, Copy)]
@@ -307,5 +337,29 @@ impl ops::Deref for GroupidBuf {
 
     fn deref(&self) -> &Self::Target {
         unsafe { Groupid::from_raw_psid_unchecked(self.0.as_raw_psid()) }
+    }
+}
+
+impl private::Sealed for GroupidBuf {}
+impl GroupidBufExt for GroupidBuf {
+    fn world() -> Result<Self, io::Error> {
+        let mut world_sid_len = unsafe { sys::GetSidLengthRequired(1) };
+        let mut buf: Vec<u8> = vec![0; world_sid_len as usize];
+
+        let return_code = unsafe {
+            sys::CreateWellKnownSid(
+                sys::WinWorldSid,
+                ptr::null_mut(),
+                buf.as_mut_ptr() as sys::PSID,
+                &mut world_sid_len,
+            )
+        };
+
+        // On success, return_code is 0
+        if return_code != 0 {
+            Ok(Self(UseridBuf { buf }))
+        } else {
+            Err(io::Error::last_os_error())
+        }
     }
 }

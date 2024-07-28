@@ -104,3 +104,14 @@ impl PartialEq<Groupid> for GroupidBuf {
         other.eq(self)
     }
 }
+
+impl private::Sealed for GroupidBuf {}
+
+#[cfg(windows)]
+impl crate::os::windows::GroupidBufExt for GroupidBuf {
+    fn world() -> Result<Self, io::Error> {
+        let os_impl_groupidbuf = os_impl::GroupidBuf::world()?;
+
+        Ok(GroupidBuf(os_impl_groupidbuf))
+    }
+}
