@@ -65,6 +65,8 @@ pub trait GroupidBufExt: private::Sealed {
     /// # Examples
     ///
     /// ```
+    /// use user_utils::os::windows::GroupidBufExt;
+    ///
     /// let world_groupid = user_utils::GroupidBuf::world().unwrap();
     /// let world_groupid_str = world_groupid.to_string();
     ///
