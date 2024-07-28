@@ -69,8 +69,9 @@ pub trait GroupidBufExt: private::Sealed {
     ///
     /// let world_groupid = user_utils::GroupidBuf::world().unwrap();
     /// let world_groupid_str = world_groupid.to_string();
+    /// println!("{:?}", world_groupid_str);
     ///
-    /// assert_eq!(world_groupid_str, "S-1-1-0")
+    /// assert_eq!(world_groupid_str, "S-1-1-0");
     /// ```
     fn world() -> Result<Self, io::Error>
     where
