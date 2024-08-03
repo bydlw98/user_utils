@@ -99,6 +99,7 @@ pub fn lookup_account_sid(psid: PSID) -> Result<OsString, Error> {
     }
 }
 
+/// Formats an SID using the given formatter.
 pub fn fmt_sid(psid: PSID, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match convert_sid_to_string_sid(psid) {
         Ok(string_sid) => write!(f, "{}", string_sid),
@@ -106,7 +107,7 @@ pub fn fmt_sid(psid: PSID, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     }
 }
 
-/// Converts an SID to a displayable string format
+/// Converts an SID to a displayable string format.
 ///
 /// # windows_sys functions used
 ///

@@ -26,7 +26,7 @@ pub trait UseridExt: private::Sealed {
     /// - [`IsValidSid`](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-isvalidsid)
     fn from_raw_psid<'psid>(psid: sys::PSID) -> Option<&'psid Self>;
 
-    /// Returns a `Userid` holding the given unvalidated raw psid
+    /// Returns a `Userid` holding the given unvalidated raw psid.
     ///
     /// # Safety
     ///
@@ -46,7 +46,7 @@ pub trait GroupidExt: private::Sealed {
     /// - [`IsValidSid`](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-isvalidsid)
     fn from_raw_psid<'psid>(psid: sys::PSID) -> Option<&'psid Self>;
 
-    /// Returns a `Userid` holding the given unvalidated raw psid
+    /// Returns a `Groupid` holding the given unvalidated raw psid.
     ///
     /// # Safety
     ///
@@ -54,6 +54,7 @@ pub trait GroupidExt: private::Sealed {
     unsafe fn from_raw_psid_unchecked<'psid>(psid: sys::PSID) -> &'psid Self;
 }
 
+/// Windows-specific extensions to [`GroupidBuf`](crate::GroupidBuf).
 pub trait GroupidBufExt: private::Sealed {
     /// Creates a new `GroupidBuf` instance containing the well-known World SID.
     ///
