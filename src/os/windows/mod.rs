@@ -127,6 +127,7 @@ impl UseridExt for Userid {
     }
 }
 
+#[derive(Eq)]
 pub(crate) struct UseridBuf(Vec<u8>);
 
 impl ops::Deref for UseridBuf {
@@ -160,8 +161,6 @@ impl PartialEq<Userid> for UseridBuf {
         sys::equal_sid(self.as_raw_psid(), other.as_raw_psid())
     }
 }
-
-impl Eq for UseridBuf {}
 
 #[derive(Clone, Eq)]
 pub(crate) struct Groupid {
@@ -197,6 +196,12 @@ impl PartialEq for Groupid {
     }
 }
 
+impl PartialEq<GroupidBuf> for Groupid {
+    fn eq(&self, other: &GroupidBuf) -> bool {
+        sys::equal_sid(self.as_raw_psid(), other.as_raw_psid())
+    }
+}
+
 impl private::Sealed for Groupid {}
 impl GroupidExt for Groupid {
     fn as_raw_psid(&self) -> sys::PSID {
@@ -218,12 +223,30 @@ impl GroupidExt for Groupid {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Eq)]
 pub(crate) struct GroupidBuf(Vec<u8>);
 
 impl fmt::Display for GroupidBuf {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         sys::fmt_sid(self.as_raw_psid(), f)
+    }
+}
+
+impl fmt::Debug for GroupidBuf {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        sys::fmt_sid(self.as_raw_psid(), f)
+    }
+}
+
+impl PartialEq for GroupidBuf {
+    fn eq(&self, other: &Self) -> bool {
+        sys::equal_sid(self.as_raw_psid(), other.as_raw_psid())
+    }
+}
+
+impl PartialEq<Groupid> for GroupidBuf {
+    fn eq(&self, other: &Groupid) -> bool {
+        sys::equal_sid(self.as_raw_psid(), other.as_raw_psid())
     }
 }
 
