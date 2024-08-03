@@ -10,7 +10,7 @@ use crate::os::windows as os_impl;
 use crate::private;
 use crate::Error;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Userid(os_impl::Userid);
 
 impl Userid {
@@ -29,6 +29,12 @@ impl Userid {
 impl fmt::Display for Userid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl fmt::Debug for Userid {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.0)
     }
 }
 
@@ -76,8 +82,26 @@ impl crate::os::windows::UseridExt for Userid {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub struct UseridBuf(os_impl::UseridBuf);
+
+impl fmt::Display for UseridBuf {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl fmt::Debug for UseridBuf {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.0)
+    }
+}
+
+impl PartialEq<Userid> for UseridBuf {
+    fn eq(&self, other: &Userid) -> bool {
+        self.0 == other.0
+    }
+}
 
 impl ops::Deref for UseridBuf {
     type Target = Userid;
@@ -86,11 +110,5 @@ impl ops::Deref for UseridBuf {
         // SAFETY: Userid is just a wrapper around os_impl::Userid.
         // therefore converting &os_impl::Userid to &Userid is safe.
         unsafe { &*(self.0.deref() as *const os_impl::Userid as *const Userid) }
-    }
-}
-
-impl PartialEq<Userid> for UseridBuf {
-    fn eq(&self, other: &Userid) -> bool {
-        self.0 == other.0
     }
 }
