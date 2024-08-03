@@ -8,6 +8,7 @@ mod utils;
 use std::ffi::OsString;
 use std::fmt;
 use std::io;
+use std::marker::{PhantomData, PhantomPinned};
 use std::mem::MaybeUninit;
 use std::ops;
 use std::ptr;
@@ -280,35 +281,48 @@ impl PartialEq<Userid> for UseridBuf {
 
 impl Eq for UseridBuf {}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Groupid(Userid);
+#[derive(Clone, Eq)]
+pub(crate) struct Groupid {
+    _data: [u8; 0],
+    _marker: PhantomData<(*mut u8, PhantomPinned)>,
+}
 
 impl Groupid {
     pub fn try_clone_to_owned(&self) -> Result<GroupidBuf, io::Error> {
-        let useridbuf = self.0.try_clone_to_owned()?;
-
-        Ok(GroupidBuf(useridbuf))
+        sys::copy_sid(self.as_raw_psid()).map(GroupidBuf)
     }
 
     pub fn groupname(&self) -> Result<OsString, Error> {
-        self.0.username()
+        sys::lookup_account_sid(self.as_raw_psid())
     }
 }
 
 impl fmt::Display for Groupid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+        sys::fmt_sid(self.as_raw_psid(), f)
+    }
+}
+
+impl fmt::Debug for Groupid {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        sys::fmt_sid(self.as_raw_psid(), f)
+    }
+}
+
+impl PartialEq for Groupid {
+    fn eq(&self, other: &Self) -> bool {
+        sys::equal_sid(self.as_raw_psid(), other.as_raw_psid())
     }
 }
 
 impl private::Sealed for Groupid {}
 impl GroupidExt for Groupid {
     fn as_raw_psid(&self) -> sys::PSID {
-        self.0.as_raw_psid()
+        self as *const Self as sys::PSID
     }
 
     fn from_raw_psid<'psid>(psid: sys::PSID) -> Option<&'psid Self> {
-        if psid.is_null() || (unsafe { sys::IsValidSid(psid) } == 0) {
+        if sys::is_invalid_sid(psid) {
             None
         } else {
             Some(unsafe { Self::from_raw_psid_unchecked(psid) })
@@ -317,17 +331,17 @@ impl GroupidExt for Groupid {
 
     unsafe fn from_raw_psid_unchecked<'psid>(psid: sys::PSID) -> &'psid Self {
         // SAFETY: Groupid is just a wrapper around sys::PSID.
-        // therefore converting sys::PSID to &Userid is safe.
-        unsafe { &*(psid as *const Self) }
+        // therefore converting sys::PSID to &Groupid is safe.
+        unsafe { &*(psid as *const sys::PSID as *const Self) }
     }
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct GroupidBuf(UseridBuf);
+pub(crate) struct GroupidBuf(Vec<u8>);
 
 impl fmt::Display for GroupidBuf {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+        sys::fmt_sid(self.as_raw_psid(), f)
     }
 }
 
@@ -335,30 +349,13 @@ impl ops::Deref for GroupidBuf {
     type Target = Groupid;
 
     fn deref(&self) -> &Self::Target {
-        unsafe { Groupid::from_raw_psid_unchecked(self.0.as_raw_psid()) }
+        unsafe { Groupid::from_raw_psid_unchecked(self.0.as_ptr() as sys::PSID) }
     }
 }
 
 impl private::Sealed for GroupidBuf {}
 impl GroupidBufExt for GroupidBuf {
     fn world() -> Result<Self, io::Error> {
-        let mut world_sid_len = unsafe { sys::GetSidLengthRequired(1) };
-        let mut buf: Vec<u8> = vec![0; world_sid_len as usize];
-
-        let return_code = unsafe {
-            sys::CreateWellKnownSid(
-                sys::WinWorldSid,
-                ptr::null_mut(),
-                buf.as_mut_ptr() as sys::PSID,
-                &mut world_sid_len,
-            )
-        };
-
-        // On success, return_code is non-zero
-        if return_code != 0 {
-            Ok(Self(UseridBuf { buf }))
-        } else {
-            Err(io::Error::last_os_error())
-        }
+        sys::create_world_sid().map(GroupidBuf)
     }
 }

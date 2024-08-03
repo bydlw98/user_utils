@@ -66,22 +66,17 @@ impl crate::os::windows::GroupidExt for Groupid {
     }
 
     fn from_raw_psid<'psid>(psid: os_impl::sys::PSID) -> Option<&'psid Self> {
-        use crate::os::windows::UseridExt;
+        let os_impl_groupid = os_impl::Groupid::from_raw_psid(psid)?;
 
-        let os_impl_userid = os_impl::Userid::from_raw_psid(psid)?;
-
-        Some(unsafe {
-            &*(os_impl_userid as *const crate::os::windows::Userid
-                as *const crate::os::windows::Groupid as *const Groupid)
-        })
+        Some(unsafe { &*(os_impl_groupid as *const os_impl::Groupid as *const Self) })
     }
 
     unsafe fn from_raw_psid_unchecked<'psid>(psid: os_impl::sys::PSID) -> &'psid Self {
         // SAFETY: Groupid is just a wrapper around sys::PSID.
-        // therefore converting sys::PSID to &Userid is safe.
+        // therefore converting sys::PSID to &Groupid is safe.
         unsafe {
-            &*(psid as *const crate::os::windows::Userid as *const crate::os::windows::Groupid
-                as *const Groupid)
+            &*(os_impl::Groupid::from_raw_psid_unchecked(psid) as *const os_impl::Groupid
+                as *const Self)
         }
     }
 }
