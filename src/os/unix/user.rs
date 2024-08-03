@@ -33,7 +33,7 @@ pub(crate) struct Userid {
 
 impl Userid {
     #[inline]
-    pub fn try_clone_to_owned(&self) -> Result<UseridBuf, io::Error> {
+    pub fn try_clone(&self) -> Result<UseridBuf, io::Error> {
         Ok(UseridBuf {
             raw_uid: self.raw_uid,
         })

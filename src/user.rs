@@ -16,8 +16,8 @@ pub struct Userid(os_impl::Userid);
 impl Userid {
     /// Creates a new [`UseridBuf`] instance.
     #[inline]
-    pub fn try_clone_to_owned(&self) -> Result<UseridBuf, io::Error> {
-        self.0.try_clone_to_owned().map(UseridBuf)
+    pub fn try_clone(&self) -> Result<UseridBuf, io::Error> {
+        self.0.try_clone().map(UseridBuf)
     }
 
     /// Searches user database and returns the login name of user.

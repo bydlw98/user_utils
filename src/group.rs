@@ -16,8 +16,8 @@ pub struct Groupid(os_impl::Groupid);
 impl Groupid {
     /// Creates a new [`GroupidBuf`] instance.
     #[inline]
-    pub fn try_clone_to_owned(&self) -> Result<GroupidBuf, io::Error> {
-        self.0.try_clone_to_owned().map(GroupidBuf)
+    pub fn try_clone(&self) -> Result<GroupidBuf, io::Error> {
+        self.0.try_clone().map(GroupidBuf)
     }
 
     /// Searches group database and returns the name of group.

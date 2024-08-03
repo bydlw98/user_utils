@@ -32,7 +32,7 @@ pub(crate) struct Groupid {
 
 impl Groupid {
     #[inline]
-    pub fn try_clone_to_owned(&self) -> Result<GroupidBuf, io::Error> {
+    pub fn try_clone(&self) -> Result<GroupidBuf, io::Error> {
         Ok(GroupidBuf {
             raw_gid: self.raw_gid,
         })

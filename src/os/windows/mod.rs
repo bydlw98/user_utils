@@ -74,7 +74,7 @@ pub(crate) struct Userid {
 }
 
 impl Userid {
-    pub fn try_clone_to_owned(&self) -> Result<UseridBuf, io::Error> {
+    pub fn try_clone(&self) -> Result<UseridBuf, io::Error> {
         sys::copy_sid(self.as_raw_psid()).map(UseridBuf)
     }
 
@@ -170,7 +170,7 @@ pub(crate) struct Groupid {
 }
 
 impl Groupid {
-    pub fn try_clone_to_owned(&self) -> Result<GroupidBuf, io::Error> {
+    pub fn try_clone(&self) -> Result<GroupidBuf, io::Error> {
         sys::copy_sid(self.as_raw_psid()).map(GroupidBuf)
     }
 
