@@ -60,7 +60,13 @@ impl fmt::Display for Groupid {
 
 impl fmt::Debug for Groupid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.raw_gid)
+        write!(f, "{}", self.raw_gid)
+    }
+}
+
+impl PartialEq<GroupidBuf> for Groupid {
+    fn eq(&self, other: &GroupidBuf) -> bool {
+        self.raw_gid == other.raw_gid
     }
 }
 
@@ -81,7 +87,7 @@ impl GroupidExt for Groupid {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq)]
 pub(crate) struct GroupidBuf {
     raw_gid: libc::gid_t,
 }
@@ -89,6 +95,18 @@ pub(crate) struct GroupidBuf {
 impl fmt::Display for GroupidBuf {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.raw_gid)
+    }
+}
+
+impl fmt::Debug for GroupidBuf {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.raw_gid)
+    }
+}
+
+impl PartialEq<Groupid> for GroupidBuf {
+    fn eq(&self, other: &Groupid) -> bool {
+        self.raw_gid == other.raw_gid
     }
 }
 

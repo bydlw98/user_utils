@@ -86,9 +86,27 @@ impl UseridExt for Userid {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq)]
 pub(crate) struct UseridBuf {
     raw_uid: libc::uid_t,
+}
+
+impl fmt::Display for UseridBuf {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.raw_uid)
+    }
+}
+
+impl fmt::Debug for UseridBuf {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.raw_uid)
+    }
+}
+
+impl PartialEq<Userid> for UseridBuf {
+    fn eq(&self, other: &Userid) -> bool {
+        self.raw_uid == other.raw_uid
+    }
 }
 
 impl ops::Deref for UseridBuf {
@@ -96,12 +114,6 @@ impl ops::Deref for UseridBuf {
 
     fn deref(&self) -> &Self::Target {
         Userid::from_raw_uid(&self.raw_uid)
-    }
-}
-
-impl PartialEq<Userid> for UseridBuf {
-    fn eq(&self, other: &Userid) -> bool {
-        self.raw_uid == other.raw_uid
     }
 }
 
