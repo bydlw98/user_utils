@@ -39,15 +39,8 @@ impl Userid {
         })
     }
 
-    /// # libc functions used
-    ///
-    /// - [`getpwuid_r`](https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwuid_r.html)
     pub fn name(&self) -> Result<OsString, Error> {
-        let pwd = self.lookup_passwd()?;
-        let pw_name = unsafe { CStr::from_ptr(pwd.raw_pwd.pw_name) };
-        let vec = pw_name.to_bytes().to_vec();
-
-        Ok(OsString::from_vec(vec))
+        get_name_by_uid(self.raw_uid)
     }
 }
 
@@ -82,7 +75,7 @@ impl UseridExt for Userid {
     }
 
     fn lookup_passwd(&self) -> Result<Passwd, Error> {
-        Passwd::lookup_by_uid(self.raw_uid)
+        get_pw_by_uid(self.raw_uid)
     }
 }
 
@@ -126,77 +119,43 @@ pub struct Passwd {
 }
 
 impl Passwd {
-    /// Returns the login name of user
+    /// Returns the login name of user.
     pub fn name(&self) -> &OsStr {
         let pw_name = unsafe { CStr::from_ptr(self.raw_pwd.pw_name) };
 
         OsStr::from_bytes(pw_name.to_bytes())
     }
 
-    /// Returns the id of user
+    /// Returns the id of user.
     #[inline]
     pub fn uid(&self) -> &crate::Userid {
         crate::Userid::from_raw_uid(&self.raw_pwd.pw_uid)
     }
 
-    /// Returns the primary group id of user
+    /// Returns the primary group id of user.
     #[inline]
     pub fn gid(&self) -> &crate::Groupid {
         crate::Groupid::from_raw_gid(&self.raw_pwd.pw_gid)
     }
 
-    /// Returns the initial working directory of user
+    /// Returns the initial working directory of user.
     pub fn dir(&self) -> &OsStr {
         let pw_dir = unsafe { CStr::from_ptr(self.raw_pwd.pw_dir) };
 
         OsStr::from_bytes(pw_dir.to_bytes())
     }
 
-    /// Returns the login shell of user
+    /// Returns the login shell of user.
     pub fn shell(&self) -> &OsStr {
         let pw_shell = unsafe { CStr::from_ptr(self.raw_pwd.pw_shell) };
 
         OsStr::from_bytes(pw_shell.to_bytes())
     }
 
-    /// Return user's raw passwd struct record
+    /// Return user's raw passwd struct record.
     #[inline]
     pub fn as_raw_passwd(&self) -> &libc::passwd {
         &self.raw_pwd
-    }
-
-    fn lookup_by_uid(uid: libc::uid_t) -> Result<Self, Error> {
-        let mut buflen = unsafe { libc::sysconf(libc::_SC_GETPW_R_SIZE_MAX) };
-        if buflen == -1 {
-            buflen = 1024;
-        }
-        let mut passwd = Self {
-            raw_pwd: unsafe { mem::zeroed() },
-            buf: vec![0; buflen as usize],
-        };
-        let mut result: *mut libc::passwd = ptr::null_mut();
-
-        unsafe {
-            let return_code = libc::getpwuid_r(
-                uid,
-                &mut passwd.raw_pwd,
-                passwd.buf.as_mut_ptr(),
-                buflen as usize,
-                &mut result,
-            );
-
-            // On success, return_code is 0
-            if return_code == 0 {
-                // If passwd record is found for uid, result is a pointer to pwd
-                if result == &mut passwd.raw_pwd {
-                    Ok(passwd)
-                } else {
-                    Err(Error::NoRecord)
-                }
-            } else {
-                Err(Error::last_os_error())
-            }
-        }
     }
 }
 
@@ -209,6 +168,59 @@ impl fmt::Debug for Passwd {
             .field("pw_dir", &self.dir())
             .field("pw_shell", &self.shell())
             .finish_non_exhaustive()
+    }
+}
+
+/// Searches user database and returns the login name of user.
+///
+/// # libc functions used
+///
+/// - [`getpwuid_r`](https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwuid_r.html)
+pub fn get_name_by_uid(uid: libc::uid_t) -> Result<OsString, Error> {
+    let pwd = get_pw_by_uid(uid)?;
+    let pw_name = unsafe { CStr::from_ptr(pwd.raw_pwd.pw_name) };
+    let vec = pw_name.to_bytes().to_vec();
+
+    Ok(OsString::from_vec(vec))
+}
+
+/// Searches user database and returns the passwd record of user.
+///
+/// # libc functions used
+///
+/// - [`getpwuid_r`](https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwuid_r.html)
+pub fn get_pw_by_uid(uid: libc::uid_t) -> Result<Passwd, Error> {
+    let mut buflen = unsafe { libc::sysconf(libc::_SC_GETPW_R_SIZE_MAX) };
+    if buflen == -1 {
+        buflen = 1024;
+    }
+
+    let mut passwd = Passwd {
+        raw_pwd: unsafe { mem::zeroed() },
+        buf: vec![0; buflen as usize],
+    };
+    let mut result: *mut libc::passwd = ptr::null_mut();
+
+    unsafe {
+        let return_code = libc::getpwuid_r(
+            uid,
+            &mut passwd.raw_pwd,
+            passwd.buf.as_mut_ptr(),
+            buflen as usize,
+            &mut result,
+        );
+
+        // On success, return_code is 0
+        if return_code == 0 {
+            // If passwd record is found for uid, result is a pointer to pwd
+            if result == &mut passwd.raw_pwd {
+                Ok(passwd)
+            } else {
+                Err(Error::NoRecord)
+            }
+        } else {
+            Err(Error::last_os_error())
+        }
     }
 }
 
@@ -245,8 +257,8 @@ mod tests {
     }
 
     #[test]
-    fn test_passwd_lookup_by_uid_ok() {
-        if let Ok(pwd) = Passwd::lookup_by_uid(unsafe { libc::getuid() }) {
+    fn test_get_pwd_by_uid_ok() {
+        if let Ok(pwd) = get_pw_by_uid(unsafe { libc::getuid() }) {
             let id_un_stdout = Command::new("id").arg("-un").output().unwrap().stdout;
             assert_eq!(
                 pwd.name().as_bytes(),
@@ -267,8 +279,8 @@ mod tests {
     }
 
     #[test]
-    fn test_passwd_lookup_by_uid_norecord() {
-        let result = Passwd::lookup_by_uid(libc::uid_t::MAX - 3);
+    fn test_get_pw_by_uid_norecord() {
+        let result = get_pw_by_uid(libc::uid_t::MAX - 3);
 
         assert!(matches!(result, Err(Error::NoRecord)));
     }
