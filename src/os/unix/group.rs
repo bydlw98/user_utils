@@ -38,17 +38,8 @@ impl Groupid {
         })
     }
 
-    /// Searches group database and returns the name of group.
-    ///
-    /// # libc functions used
-    ///
-    /// - [`getgrgid_r`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/getgrgid_r.html)
     pub fn name(&self) -> Result<OsString, Error> {
-        let grp = self.lookup_group()?;
-        let gr_name = unsafe { CStr::from_ptr(grp.raw_group.gr_name) };
-        let vec = gr_name.to_bytes().to_vec();
-
-        Ok(OsString::from_vec(vec))
+        get_name_by_gid(self.raw_gid)
     }
 }
 
@@ -83,7 +74,7 @@ impl GroupidExt for Groupid {
     }
 
     fn lookup_group(&self) -> Result<Group, Error> {
-        Group::lookup_by_gid(self.raw_gid)
+        get_gr_by_gid(self.raw_gid)
     }
 }
 
@@ -118,7 +109,7 @@ impl ops::Deref for GroupidBuf {
     }
 }
 
-/// Metadata information about a group
+/// Metadata information about a group.
 ///
 /// Newtype pattern around [`group`](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/grp.h.html)
 pub struct Group {
@@ -127,20 +118,20 @@ pub struct Group {
 }
 
 impl Group {
-    /// Returns the name of group
+    /// Returns the name of group.
     pub fn name(&self) -> &OsStr {
         let gr_name = unsafe { CStr::from_ptr(self.raw_group.gr_name) };
 
         OsStr::from_bytes(gr_name.to_bytes())
     }
 
-    /// Returns the id of group
+    /// Returns the id of group.
     #[inline]
     pub fn gid(&self) -> &crate::Groupid {
         crate::Groupid::from_raw_gid(&self.raw_group.gr_gid)
     }
 
-    /// Returns the usernames in group
+    /// Returns the usernames in group.
     pub fn mem(&self) -> Vec<OsString> {
         let mut member_usernames: Vec<OsString> = Vec::new();
         let mut i: isize = 0;
@@ -161,45 +152,10 @@ impl Group {
         member_usernames
     }
 
-    /// Returns the raw group struct record
+    /// Returns the raw group struct record.
     #[inline]
     pub fn as_raw_group(&self) -> &libc::group {
         &self.raw_group
-    }
-
-    fn lookup_by_gid(gid: libc::gid_t) -> Result<Self, Error> {
-        let mut buflen = unsafe { libc::sysconf(libc::_SC_GETPW_R_SIZE_MAX) };
-        if buflen == -1 {
-            buflen = 1024;
-        }
-
-        let mut grp = Self {
-            raw_group: unsafe { mem::zeroed() },
-            buf: vec![0; buflen as usize],
-        };
-        let mut result: *mut libc::group = ptr::null_mut();
-
-        unsafe {
-            let return_code = libc::getgrgid_r(
-                gid,
-                &mut grp.raw_group,
-                grp.buf.as_mut_ptr(),
-                buflen as usize,
-                &mut result,
-            );
-
-            // On success, return_code is 0
-            if return_code == 0 {
-                // If passwd record is found for uid, result is a pointer to pwd
-                if result == &mut grp.raw_group {
-                    Ok(grp)
-                } else {
-                    Err(Error::NoRecord)
-                }
-            } else {
-                Err(Error::last_os_error())
-            }
-        }
     }
 }
 
@@ -210,5 +166,58 @@ impl fmt::Debug for Group {
             .field("gr_gid", &self.gid())
             .field("gr_mem", &self.mem())
             .finish_non_exhaustive()
+    }
+}
+
+/// Searches group database and returns the name of group.
+///
+/// # libc functions used
+///
+/// - [`getgrgid_r`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/getgrgid_r.html)
+pub fn get_name_by_gid(gid: libc::gid_t) -> Result<OsString, Error> {
+    let grp = get_gr_by_gid(gid)?;
+    let gr_name = unsafe { CStr::from_ptr(grp.raw_group.gr_name) };
+    let vec = gr_name.to_bytes().to_vec();
+
+    Ok(OsString::from_vec(vec))
+}
+
+/// Searches group database and returns the group record of group.
+///
+/// # libc functions used
+///
+/// - [`getgrgid_r`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/getgrgid_r.html)
+pub fn get_gr_by_gid(gid: libc::gid_t) -> Result<Group, Error> {
+    let mut buflen = unsafe { libc::sysconf(libc::_SC_GETPW_R_SIZE_MAX) };
+    if buflen == -1 {
+        buflen = 1024;
+    }
+
+    let mut grp = Group {
+        raw_group: unsafe { mem::zeroed() },
+        buf: vec![0; buflen as usize],
+    };
+    let mut result: *mut libc::group = ptr::null_mut();
+
+    unsafe {
+        let return_code = libc::getgrgid_r(
+            gid,
+            &mut grp.raw_group,
+            grp.buf.as_mut_ptr(),
+            buflen as usize,
+            &mut result,
+        );
+
+        // On success, return_code is 0
+        if return_code == 0 {
+            // If group record is found for gid, result is a pointer to grp
+            if result == &mut grp.raw_group {
+                Ok(grp)
+            } else {
+                Err(Error::NoRecord)
+            }
+        } else {
+            Err(Error::last_os_error())
+        }
     }
 }
