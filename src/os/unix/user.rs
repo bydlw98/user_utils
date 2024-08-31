@@ -42,7 +42,7 @@ impl Userid {
     /// # libc functions used
     ///
     /// - [`getpwuid_r`](https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwuid_r.html)
-    pub fn username(&self) -> Result<OsString, Error> {
+    pub fn name(&self) -> Result<OsString, Error> {
         let pwd = self.lookup_passwd()?;
         let pw_name = unsafe { CStr::from_ptr(pwd.raw_pwd.pw_name) };
         let vec = pw_name.to_bytes().to_vec();
@@ -223,7 +223,7 @@ mod tests {
         let uid = unsafe { libc::getuid() };
         let userid = Userid::from_raw_uid(&uid);
 
-        if let Ok(username) = userid.username() {
+        if let Ok(username) = userid.name() {
             let id_un_stdout = Command::new("id").arg("-un").output().unwrap().stdout;
 
             assert_eq!(
@@ -239,7 +239,7 @@ mod tests {
     fn test_userid_username_norecord() {
         let uid = libc::uid_t::MAX - 3;
         let userid = Userid::from_raw_uid(&uid);
-        let result = userid.username();
+        let result = userid.name();
 
         assert!(matches!(result, Err(Error::NoRecord)));
     }

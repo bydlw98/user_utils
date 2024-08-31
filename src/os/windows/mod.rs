@@ -78,7 +78,7 @@ impl Userid {
         sys::copy_sid(self.as_raw_psid()).map(UseridBuf)
     }
 
-    pub fn username(&self) -> Result<OsString, Error> {
+    pub fn name(&self) -> Result<OsString, Error> {
         sys::lookup_account_sid(self.as_raw_psid())
     }
 }
@@ -174,7 +174,7 @@ impl Groupid {
         sys::copy_sid(self.as_raw_psid()).map(GroupidBuf)
     }
 
-    pub fn groupname(&self) -> Result<OsString, Error> {
+    pub fn name(&self) -> Result<OsString, Error> {
         sys::lookup_account_sid(self.as_raw_psid())
     }
 }

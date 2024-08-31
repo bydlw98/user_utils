@@ -43,7 +43,7 @@ impl Groupid {
     /// # libc functions used
     ///
     /// - [`getgrgid_r`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/getgrgid_r.html)
-    pub fn groupname(&self) -> Result<OsString, Error> {
+    pub fn name(&self) -> Result<OsString, Error> {
         let grp = self.lookup_group()?;
         let gr_name = unsafe { CStr::from_ptr(grp.raw_group.gr_name) };
         let vec = gr_name.to_bytes().to_vec();

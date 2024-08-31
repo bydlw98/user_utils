@@ -21,8 +21,8 @@ impl Userid {
     }
 
     /// Searches user database and returns the login name of user.
-    pub fn username(&self) -> Result<OsString, Error> {
-        self.0.username()
+    pub fn name(&self) -> Result<OsString, Error> {
+        self.0.name()
     }
 }
 

@@ -21,8 +21,8 @@ impl Groupid {
     }
 
     /// Searches group database and returns the name of group.
-    pub fn groupname(&self) -> Result<OsString, Error> {
-        self.0.groupname()
+    pub fn name(&self) -> Result<OsString, Error> {
+        self.0.name()
     }
 }
 
