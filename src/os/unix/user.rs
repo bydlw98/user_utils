@@ -26,7 +26,7 @@ pub trait UseridExt: private::Sealed {
     fn lookup_passwd(&self) -> Result<Passwd, Error>;
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub(crate) struct Userid {
     raw_uid: libc::uid_t,
 }

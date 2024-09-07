@@ -25,7 +25,7 @@ pub trait GroupidExt: private::Sealed {
     fn lookup_group(&self) -> Result<Group, Error>;
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub(crate) struct Groupid {
     raw_gid: libc::gid_t,
 }

@@ -10,7 +10,7 @@ use crate::os::windows as os_impl;
 use crate::private;
 use crate::Error;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub struct Groupid(os_impl::Groupid);
 
 impl Groupid {

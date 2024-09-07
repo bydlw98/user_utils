@@ -67,7 +67,7 @@ pub trait GroupidBufExt: private::Sealed {
         Self: Sized;
 }
 
-#[derive(Clone, Eq)]
+#[derive(Eq)]
 pub(crate) struct Userid {
     _data: [u8; 0],
     _marker: PhantomData<(*mut u8, PhantomPinned)>,
@@ -163,7 +163,7 @@ impl PartialEq<Userid> for UseridBuf {
     }
 }
 
-#[derive(Clone, Eq)]
+#[derive(Eq)]
 pub(crate) struct Groupid {
     _data: [u8; 0],
     _marker: PhantomData<(*mut u8, PhantomPinned)>,
