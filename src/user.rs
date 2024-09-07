@@ -65,17 +65,17 @@ impl crate::os::unix::UseridExt for Userid {
 
 #[cfg(windows)]
 impl crate::os::windows::UseridExt for Userid {
-    fn as_raw_psid(&self) -> crate::os::windows::sys::PSID {
+    fn as_raw_psid(&self) -> os_impl::PSID {
         self.0.as_raw_psid()
     }
 
-    fn from_raw_psid<'psid>(psid: os_impl::sys::PSID) -> Option<&'psid Self> {
+    fn from_raw_psid<'psid>(psid: os_impl::PSID) -> Option<&'psid Self> {
         let os_impl_userid = os_impl::Userid::from_raw_psid(psid)?;
 
         Some(unsafe { &*(os_impl_userid as *const crate::os::windows::Userid as *const Userid) })
     }
 
-    unsafe fn from_raw_psid_unchecked<'psid>(psid: os_impl::sys::PSID) -> &'psid Self {
+    unsafe fn from_raw_psid_unchecked<'psid>(psid: os_impl::PSID) -> &'psid Self {
         // SAFETY: Userid is just a wrapper around sys::PSID.
         // therefore converting sys::PSID to &Userid is safe.
         unsafe { &*(psid as *const crate::os::windows::Userid as *const Userid) }

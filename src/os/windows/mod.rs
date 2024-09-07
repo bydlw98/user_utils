@@ -1,9 +1,11 @@
 //! Windows-specific wrappers around user and group primitives.
 
-pub(crate) mod sys;
+mod sys;
 #[cfg(test)]
 mod tests;
 mod utils;
+
+pub use sys::*;
 
 use std::ffi::OsString;
 use std::fmt;

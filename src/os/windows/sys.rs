@@ -35,7 +35,7 @@ pub fn copy_sid(psid: PSID) -> Result<Vec<u8>, io::Error> {
     }
 }
 
-/// Searches database and returns the account name of SID in a `DOMAIN\name` format
+/// Searches database and returns the account name of SID in a `DOMAIN\name` format.
 ///
 /// # windows_sys functions used
 ///
@@ -100,7 +100,7 @@ pub fn lookup_account_sid(psid: PSID) -> Result<OsString, Error> {
 }
 
 /// Formats an SID using the given formatter.
-pub fn fmt_sid(psid: PSID, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+pub(crate) fn fmt_sid(psid: PSID, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match convert_sid_to_string_sid(psid) {
         Ok(string_sid) => write!(f, "{}", string_sid),
         Err(_) => Err(fmt::Error),
@@ -155,7 +155,7 @@ pub fn is_invalid_sid(psid: PSID) -> bool {
 ///
 /// - [`GetSidLengthRequired`](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-getsidlengthrequired)
 /// - [`CreateWellKnownSid`](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-createwellknownsid)
-pub fn create_world_sid() -> Result<Vec<u8>, io::Error> {
+pub(crate) fn create_world_sid() -> Result<Vec<u8>, io::Error> {
     let mut world_sid_len = unsafe { GetSidLengthRequired(1) };
     let mut buf: Vec<u8> = vec![0; world_sid_len as usize];
 
