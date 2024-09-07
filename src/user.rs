@@ -10,6 +10,7 @@ use crate::os::windows as os_impl;
 use crate::private;
 use crate::Error;
 
+/// A new type pattern around a `borrowed` platform-native user id.
 #[derive(PartialEq, Eq)]
 pub struct Userid(os_impl::Userid);
 
@@ -82,6 +83,7 @@ impl crate::os::windows::UseridExt for Userid {
     }
 }
 
+/// A new type pattern around an `owned` platform-native user id.
 #[derive(PartialEq, Eq)]
 pub struct UseridBuf(os_impl::UseridBuf);
 

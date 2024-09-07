@@ -110,7 +110,7 @@ impl ops::Deref for UseridBuf {
     }
 }
 
-/// Metadata information about a user
+/// Metadata information about a user.
 ///
 /// Newtype pattern around [`passwd`](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/pwd.h.html)
 pub struct Passwd {
@@ -171,7 +171,7 @@ impl fmt::Debug for Passwd {
     }
 }
 
-/// Searches user database and returns the login name of user.
+/// Searches user database and returns the login name of uid.
 ///
 /// # libc functions used
 ///
@@ -184,7 +184,7 @@ pub fn get_name_by_uid(uid: libc::uid_t) -> Result<OsString, Error> {
     Ok(OsString::from_vec(vec))
 }
 
-/// Searches user database and returns the passwd record of user.
+/// Searches user database and returns the passwd record of uid.
 ///
 /// # libc functions used
 ///

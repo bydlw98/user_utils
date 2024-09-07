@@ -10,6 +10,7 @@ use crate::os::windows as os_impl;
 use crate::private;
 use crate::Error;
 
+/// A new type pattern around a `borrowed` platform-native group id.
 #[derive(PartialEq, Eq)]
 pub struct Groupid(os_impl::Groupid);
 
@@ -87,6 +88,7 @@ impl crate::os::windows::GroupidExt for Groupid {
     }
 }
 
+/// A new type pattern around an `owned` platform-native group id.
 #[derive(PartialEq, Eq)]
 pub struct GroupidBuf(os_impl::GroupidBuf);
 

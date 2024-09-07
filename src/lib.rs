@@ -15,18 +15,18 @@ mod private {
     pub trait Sealed {}
 }
 
-/// An error when searching through user or group database
+/// An error when searching through user or group database.
 #[derive(Debug)]
 pub enum Error {
-    /// No record found
+    /// No record found.
     NoRecord,
 
-    /// An error that occured when doing I/O
+    /// An error that occured when doing I/O.
     Io(io::Error),
 }
 
 impl Error {
-    /// Shorthand for `Error::Io(io::Error::last_os_error())`
+    /// Shorthand for `Error::Io(io::Error::last_os_error())`.
     #[cfg(unix)]
     fn last_os_error() -> Self {
         Self::Io(io::Error::last_os_error())

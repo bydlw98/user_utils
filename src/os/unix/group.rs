@@ -169,7 +169,7 @@ impl fmt::Debug for Group {
     }
 }
 
-/// Searches group database and returns the name of group.
+/// Searches group database and returns the name of gid.
 ///
 /// # libc functions used
 ///
@@ -182,7 +182,7 @@ pub fn get_name_by_gid(gid: libc::gid_t) -> Result<OsString, Error> {
     Ok(OsString::from_vec(vec))
 }
 
-/// Searches group database and returns the group record of group.
+/// Searches group database and returns the group record of gid.
 ///
 /// # libc functions used
 ///
